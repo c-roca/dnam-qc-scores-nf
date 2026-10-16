@@ -1,0 +1,30 @@
+# Nextflow
+work/
+.nextflow/
+.nextflow.log*
+results/
+test_results/
+
+# Resultados intermedios si corres algo fuera de -profile (por si acaso)
+*.rds
+
+# Recursos de terceros (listas de sondas / loci) -- ver assets/qc_resources/README.md.
+# Quita estas lineas si prefieres comitearlos directamente en el repo.
+assets/qc_resources/filter/*.txt
+assets/qc_resources/Bin_positions_*.txt
+assets/qc_resources/Stable_loci.txt
+
+# Datos de muestras reales -- nunca deberian vivir en este repo
+test_data/*.idat
+test_data/*.idat.gz
+*.idat
+*.idat.gz
+
+# R / RStudio
+.Rhistory
+.RData
+.Rproj.user/
+
+# macOS / editores
+.DS_Store
+*.swp
