@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Paquetes CRAN
-RUN R -e "install.packages(c('data.table', 'dplyr', 'matrixStats', 'ggplot2', 'remotes', 'BiocManager'), repos = 'https://cloud.r-project.org')"
+RUN R -e "install.packages(c('data.table', 'dplyr', 'matrixStats', 'ggplot2', 'plotly', 'remotes', 'BiocManager'), repos = 'https://cloud.r-project.org')"
 
 # Paquetes Bioconductor -- version fijada por la imagen base (Bioconductor 3.19)
 RUN R -e "BiocManager::install(c( \
