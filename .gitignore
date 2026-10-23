@@ -28,3 +28,4 @@ test_data/*.idat.gz
 # macOS / editores
 .DS_Store
 *.swp
+build.log
