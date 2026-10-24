@@ -43,24 +43,24 @@ def helpMessage() {
     """.stripIndent()
 }
 
-if (params.help) {
-    helpMessage()
-    exit 0
-}
-
-if (!params.input) {
-    helpMessage()
-    error "Falta --input <samplesheet.csv>. Ver 'nextflow run . --help'."
-}
-
 workflow {
+
+    if (params.help) {
+        helpMessage()
+        exit 0
+    }
+
+    if (!params.input) {
+        helpMessage()
+        error "Falta --input <samplesheet.csv>. Ver 'nextflow run . --help'."
+    }
 
     // --------------------------------------------------------------------
     // 1. Leer el samplesheet maestro y agrupar filas por array_type.
     // --------------------------------------------------------------------
     ch_rows = Channel
         .fromPath(params.input, checkIfExists: true)
-        .splitCsv(header: true)
+        .splitCsv(header: true, quote: '"')   // write.csv de R (make_nf_samplesheet.R) entrecomilla todo
         .map { row ->
             if (!row.idat_grn || !row.idat_red) {
                 error "Fila sin idat_grn/idat_red en ${params.input}: ${row}"
@@ -89,7 +89,10 @@ workflow {
             def red = file(row.idat_red)
             idat_files << grn
             idat_files << red
-            lines << [row.sample, row.array_type, row.sample_group ?: '', row.tissue_type ?: '', grn.name, red.name].join(',')
+            // Entrecomillar cada campo: sample_group puede llevar comas (p.ej. "SLCT, no defined subtype")
+            lines << [row.sample, row.array_type, row.sample_group ?: '', row.tissue_type ?: '', grn.name, red.name]
+                .collect { v -> '"' + v.toString().replace('"', '""') + '"' }
+                .join(',')
         }
         def sheet = file("${workDir}/nf_samplesheets/${array_type}_samplesheet.csv")
         sheet.parent.mkdirs()

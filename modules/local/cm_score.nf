@@ -1,6 +1,6 @@
 process CM_SCORE {
-    tag "${array_type}"
-    publishDir "${params.outdir}/${array_type}/CM_Score", mode: 'copy'
+    tag { array_type }
+    publishDir { "${params.outdir}/${array_type}/CM_Score" }, mode: 'copy'
 
     input:
     tuple val(array_type), path(beta_rds)

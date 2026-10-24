@@ -1,5 +1,5 @@
 process NORMALIZE {
-    tag "${array_type}"
+    tag { array_type }
 
     input:
     tuple val(array_type), path(rgset_rds)

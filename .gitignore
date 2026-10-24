@@ -29,3 +29,11 @@ test_data/*.idat.gz
 .DS_Store
 *.swp
 build.log
+
+# Samplesheet de test real (rutas locales a IDATs) -- no subir; plantilla en samplesheet_test.example.csv
+test_data/samplesheet_test.csv
+
+# Samplesheets reales (datos sensibles) -- solo en local, nunca al repo
+samplesheet_all.csv
+samplesheet_*.csv
+!test_data/samplesheet_test.example.csv

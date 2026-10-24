@@ -1,5 +1,5 @@
 process FILTER_SAMPLES {
-    tag "${array_type}"
+    tag { array_type }
 
     input:
     tuple val(array_type), path(rgset_rds), path(detp_rds), path(targets_rds)
