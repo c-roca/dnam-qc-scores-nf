@@ -1,6 +1,6 @@
 process READ_RGSET {
-    tag "${array_type}"
-    publishDir "${params.outdir}/${array_type}/qc_report", mode: 'copy', pattern: '*.pdf'
+    tag { array_type }
+    publishDir { "${params.outdir}/${array_type}/qc_report" }, mode: 'copy', pattern: '*.pdf'
 
     input:
     tuple val(array_type), path(samplesheet), path(idat_files)

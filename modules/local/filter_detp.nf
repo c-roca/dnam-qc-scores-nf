@@ -1,5 +1,5 @@
 process FILTER_DETP {
-    tag "${array_type}"
+    tag { array_type }
 
     input:
     tuple val(array_type), path(msetsq_rds), path(detp_rds)

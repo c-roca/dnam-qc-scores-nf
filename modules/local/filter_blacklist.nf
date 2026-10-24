@@ -1,5 +1,5 @@
 process FILTER_BLACKLIST {
-    tag "${array_type}"
+    tag { array_type }
 
     input:
     tuple val(array_type), path(msetsq_rds)

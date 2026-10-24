@@ -1,6 +1,6 @@
 process MERGE_SUMMARY {
-    tag "${array_type}"
-    publishDir "${params.outdir}/${array_type}", mode: 'copy'
+    tag { array_type }
+    publishDir { "${params.outdir}/${array_type}" }, mode: 'copy'
 
     input:
     tuple val(array_type), path(db_csv), path(cm_csv), path(bin_csv)
