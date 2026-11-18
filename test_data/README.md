@@ -1,28 +1,46 @@
 # test_data/
 
-Esta carpeta está vacía a propósito — las muestras reales no se suben al repo.
+This folder is intentionally empty -- real samples never get committed to the repo.
 
-Para probar el pipeline antes de lanzarlo contra tus 166 muestras:
+## Quick test (no data of your own needed)
 
-1. Elige 2-4 muestras tuyas de **un mismo array_type**, al menos una de ellas
-   con `control_pattern` (por defecto `"Normal"`) en el nombre o en el grupo,
-   y al menos una que no lo tenga (si no, `BIN_SCORE` se salta — no es un
-   error, pero no prueba esa parte).
-2. Rellena `samplesheet_test.csv` con esas filas, por ejemplo:
+```bash
+nextflow run . -profile test,docker --outdir test_results
+```
 
-   ```csv
-   sample,array_type,sample_group,tissue_type,idat_grn,idat_red
-   control_1,EPIC,Normal,,/ruta/absoluta/1234567890_R01C01_Grn.idat,/ruta/absoluta/1234567890_R01C01_Red.idat
-   EXAMPLE_GROUP_1,EPIC,EXAMPLE_GROUP,,/ruta/absoluta/1234567890_R02C01_Grn.idat,/ruta/absoluta/1234567890_R02C01_Red.idat
+`-profile test` sets `params.fetch_test_data = true` (see `conf/test.config`), which
+fetches a small, legitimately public IDAT set straight from Bioconductor's own
+minfi test-data packages -- `minfiData` for 450K, `minfiDataEPIC` for EPIC -- via
+`bin/fetch_test_data.R`. This needs internet access the first time (to install those
+two packages inside the container), but no private IDATs, no `--input`, and nothing
+to fill in here.
+
+`minfiDataEPIC` ships 3 technical replicates of a single cell line, so there's no
+control/case contrast for that array -- `BIN_SCORE` legitimately comes out empty
+(header only) for the EPIC leg of this test. That's documented pipeline behaviour
+(see the main README's Outputs section), not a bug. There is currently no equivalent
+small public test package for EPIC_V2, so this quick test doesn't cover it.
+
+## Testing against your own samples instead
+
+Useful if you want to validate EPIC_V2 specifically, or do one last check with your
+own data's quirks before a real run:
+
+1. Pick 2-4 of your own samples from **a single array_type**, at least one matching
+   `control_pattern` (default `"Normal"`) in its name or group, and at least one that
+   doesn't (otherwise `BIN_SCORE` is skipped -- not an error, but it won't exercise
+   that part).
+2. Fill in `samplesheet_test.csv` with those rows -- see `samplesheet_test.example.csv`
+   for the exact format, or generate it from your usual targets CSV with
+   `bin/make_nf_samplesheet.R` and trim the result down to 2-4 rows.
+3. Make sure `assets/qc_resources/` is populated (see its own README) -- the test
+   profile needs it just like a real run does.
+4. Run with the public-data fetch turned off:
+
+   ```bash
+   nextflow run . -profile test,docker --fetch_test_data false \
+       --input test_data/samplesheet_test.csv --outdir test_results
    ```
 
-   También puedes generarlo con `bin/make_nf_samplesheet.R` a partir de tu
-   targets CSV de siempre (el mismo formato que usaba
-   `01_targets_final_paperWDSLCT.csv`) y luego recortar el resultado a solo
-   2-4 filas.
-3. Asegúrate de que `assets/qc_resources/` está poblado (ver su propio
-   README) — el perfil de test lo necesita igual que una corrida real.
-4. `nextflow run . -profile test,docker --outdir test_results`
-
-No hace falta copiar los .idat a esta carpeta: las rutas en el CSV pueden
-apuntar directamente a donde ya los tengas en tu disco.
+You don't need to copy the `.idat` files into this folder: the paths in the CSV can
+point straight to wherever they already live on disk.

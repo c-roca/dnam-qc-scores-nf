@@ -7,9 +7,17 @@ process FILTER_DETP {
 
     output:
     tuple val(array_type), path("msetsq_detp.rds"), emit: msetsq
+    path "versions.yml",                             emit: versions
 
     script:
     """
     filter_detp.R "${msetsq_rds}" "${detp_rds}" ${detp_threshold} msetsq_detp.rds
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        r: \$(Rscript -e 'cat(R.version.string)' | sed 's/R version //; s/ .*//')
+        minfi: \$(Rscript -e 'cat(as.character(packageVersion("minfi")))')
+        matrixStats: \$(Rscript -e 'cat(as.character(packageVersion("matrixStats")))')
+    END_VERSIONS
     """
 }

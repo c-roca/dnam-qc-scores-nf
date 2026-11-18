@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Config & lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java (required by Nextflow)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Nextflow
+        run: |
+          curl -s https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+          nextflow -version
+
+      - name: Check the pipeline parses OK
+        run: nextflow config .
+
+      - name: Fail on leftover placeholders
+        run: |
+          if grep -rn "REEMPLAZA_TU_USUARIO\|<TU_USUARIO>\|<YOUR_USER>\|FIXME" \
+               --include='*.nf' --include='*.config' -- . 2>/dev/null \
+               | grep -v '^\./.github/workflows/ci.yml'; then
+            echo "::error::Found an unfilled placeholder above -- fill it in before merging."
+            exit 1
+          fi
+
+  test:
+    name: Public test profile (best-effort)
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java (required by Nextflow)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Nextflow
+        run: |
+          curl -s https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      # -profile test fetches its own small public IDAT set (see
+      # bin/fetch_test_data.R), so no samplesheet or secret is needed for
+      # that part. It still needs assets/qc_resources/filter/ to get past
+      # FILTER_BLACKLIST, though, and those 4 files aren't vendored in this
+      # repo (see assets/qc_resources/README.md) -- so on a plain fork/clone
+      # this step currently fails there by design, not from a code bug.
+      # Marked continue-on-error so that known, documented gap doesn't paint
+      # the whole pipeline red; the `lint` job above is what actually gates
+      # CI. Once assets/qc_resources/filter/*.txt is provided (vendored, or
+      # restored here from a repository secret/artifact), drop
+      # continue-on-error so this becomes a real pass/fail check end to end.
+      - name: Run -profile test,docker
+        continue-on-error: true
+        run: nextflow run . -profile test,docker --outdir test_results
+
+      - name: Upload test run logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-run-logs
+          path: |
+            .nextflow.log
+            test_results/pipeline_info/
+          if-no-files-found: ignore

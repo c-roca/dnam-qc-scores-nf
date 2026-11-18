@@ -1,15 +1,15 @@
 //
-// Subworkflow principal: porta paso a paso qc_scores_pipeline.R (el script
-// standalone original) a procesos de Nextflow. Cada array_type (450K, EPIC,
-// EPIC_V2) corre esta misma cadena de forma independiente y en paralelo --
-// igual que el script original, que se ejecutaba una vez por array_type.
+// Main subworkflow: ports qc_scores_pipeline.R (the original standalone
+// script) step by step to Nextflow processes. Each array_type (450K, EPIC,
+// EPIC_V2) runs this same chain independently and in parallel -- just like
+// the original script, which was run once per array_type.
 //
-// Orden (igual que el script original, ver comentarios ahi para el porque):
-//   READ_RGSET -> FILTER_SAMPLES (paso 0) -> NORMALIZE (paso 1)
-//     -> FILTER_DETP (paso 2) -> FILTER_BLACKLIST (paso 3)
-//        -> BIN_SCORE (sobre msetsq_flt, antes de la beta matrix)
-//        -> CALC_BETA (paso 4 + 5)
-//           -> DB_SCORE + CM_SCORE (sobre la beta matrix final)
+// Order (same as the original script, see its comments for the why):
+//   READ_RGSET -> FILTER_SAMPLES (step 0) -> NORMALIZE (step 1)
+//     -> FILTER_DETP (step 2) -> FILTER_BLACKLIST (step 3)
+//        -> BIN_SCORE (on msetsq_flt, before the beta matrix)
+//        -> CALC_BETA (steps 4 + 5)
+//           -> DB_SCORE + CM_SCORE (on the final beta matrix)
 //              -> MERGE_SUMMARY
 //
 
@@ -23,16 +23,17 @@ include { CALC_BETA }        from '../modules/local/calc_beta'
 include { DB_SCORE }         from '../modules/local/db_score'
 include { CM_SCORE }         from '../modules/local/cm_score'
 include { MERGE_SUMMARY }    from '../modules/local/merge_summary'
+include { MERGE_VERSIONS }   from '../modules/local/merge_versions'
 
 workflow QC_SCORES {
     take:
-    ch_input   // tuple(array_type, samplesheet_local.csv, [idat files...])
+    ch_input   // tuple(array_type, local_samplesheet.csv, [idat files...])
 
     main:
     READ_RGSET(ch_input)
 
     // tuple(array_type, rgset) + tuple(array_type, detp) + tuple(array_type, targets)
-    // -> un solo canal tuple(array_type, rgset, detp, targets) para FILTER_SAMPLES
+    // -> a single tuple(array_type, rgset, detp, targets) channel for FILTER_SAMPLES
     ch_for_filter = READ_RGSET.out.rgset
         .join(READ_RGSET.out.detp)
         .join(READ_RGSET.out.targets)
@@ -59,7 +60,26 @@ workflow QC_SCORES {
 
     MERGE_SUMMARY(ch_for_merge)
 
+    // -------------------------------------------------------------------
+    // Collect every process's versions.yml (one per array_type instance)
+    // into a single combined report (nf-core's dumpsoftwareversions idiom).
+    // -------------------------------------------------------------------
+    ch_versions = READ_RGSET.out.versions
+        .mix(FILTER_SAMPLES.out.versions)
+        .mix(NORMALIZE.out.versions)
+        .mix(FILTER_DETP.out.versions)
+        .mix(FILTER_BLACKLIST.out.versions)
+        .mix(BIN_SCORE.out.versions)
+        .mix(CALC_BETA.out.versions)
+        .mix(DB_SCORE.out.versions)
+        .mix(CM_SCORE.out.versions)
+        .mix(MERGE_SUMMARY.out.versions)
+        .collect()
+
+    MERGE_VERSIONS(ch_versions)
+
     emit:
-    summary = MERGE_SUMMARY.out.csv
-    beta    = CALC_BETA.out.rds
+    summary  = MERGE_SUMMARY.out.csv
+    beta     = CALC_BETA.out.rds
+    versions = MERGE_VERSIONS.out
 }

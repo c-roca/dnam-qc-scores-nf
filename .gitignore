@@ -8,11 +8,12 @@ test_results/
 # Resultados intermedios si corres algo fuera de -profile (por si acaso)
 *.rds
 
-# Recursos de terceros (listas de sondas / loci) -- ver assets/qc_resources/README.md.
-# Quita estas lineas si prefieres comitearlos directamente en el repo.
+# Third-party resources -- see assets/qc_resources/README.md.
+# Bin_positions_*.txt and Stable_loci.txt are vendored in the repo (MIT,
+# from the public GlaserSe/DNAm-qc-scores repo this pipeline already cites).
+# filter/*.txt stays private (provenance/licence not confirmed) -- copy it
+# from your own setup before running anything that needs it.
 assets/qc_resources/filter/*.txt
-assets/qc_resources/Bin_positions_*.txt
-assets/qc_resources/Stable_loci.txt
 
 # Datos de muestras reales -- nunca deberian vivir en este repo
 test_data/*.idat

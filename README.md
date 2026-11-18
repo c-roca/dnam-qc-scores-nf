@@ -74,13 +74,17 @@ control_1,EPIC,Normal,,/absolute/path/1234567890_R02C01_Grn.idat,/absolute/path/
 
 ```bash
 nextflow config .                              # checks the pipeline parses OK
-# fill test_data/samplesheet_test.csv with 2-4 of your own samples (see test_data/README.md)
 nextflow run . -profile test,docker --outdir test_results
 ```
 
-This runs the full chain (reading IDATs, normalization, filtering, BIN-Score, beta,
-DB/CM-Score, summary) with smaller resources, so you catch any environment/path issue
-before a long run.
+`-profile test` fetches a small, legitimately public IDAT set on its own (from
+Bioconductor's `minfiData`/`minfiDataEPIC` test-data packages -- see
+`bin/fetch_test_data.R`), so this runs out of the box with no samplesheet of your own
+and no `--input`. It runs the full chain (reading IDATs, normalization, filtering,
+BIN-Score, beta, DB/CM-Score, summary) with smaller resources, so you catch any
+environment/path issue before a long run. See `test_data/README.md` if you'd rather
+test against your own samples (e.g. to cover EPIC_V2, which that public test data
+doesn't include).
 
 ## 4. Run it on your real data
 
@@ -100,7 +104,7 @@ after a failure or a parameter change.
 
 | Parameter | Default | What it is |
 |---|---|---|
-| `--input` | *(required)* | master samplesheet (see above) |
+| `--input` | *(required, unless `-profile test`)* | master samplesheet (see above) |
 | `--outdir` | `results` | output folder |
 | `--norm_method` | `ssnoob` | `ssnoob\|raw\|illumina\|quantile\|funnorm` |
 | `--detp_threshold` | `0.05` | detection-p threshold (samples and probes) |
@@ -117,6 +121,10 @@ For each `array_type`, inside `<outdir>/<array_type>/`:
 - `CM_Score/CMScores.csv`
 - `QC_Scores_summary_<array_type>.csv`, the merge of the three
 - `beta_<array_type>.rds` / `.csv`, final beta matrix
+
+Shared across all array types, inside `<outdir>/pipeline_info/`:
+
+- `software_versions.yml`, the R/package versions every process actually ran with
 
 Cutoffs suggested by the paper (heuristics, not validated biological thresholds):
 
@@ -138,10 +146,10 @@ workflows/qc_scores.nf     full chain of processes per array_type
 modules/local/*.nf         one process per step (1:1 with qc_scores_pipeline.R)
 bin/*.R                    the actual logic for each step (R), called from each process
 conf/base.config           CPU/RAM per process
-conf/test.config           test profile with a small subset
+conf/test.config           test profile: fetches public IDATs via bin/fetch_test_data.R
 docker/Dockerfile          image with minfi/conumee2/DMRcate/...
 assets/qc_resources/       blacklist lists, bin tables and stable loci (not versioned)
-test_data/                 test samplesheet (empty by default)
+test_data/                 samplesheet for testing against your OWN samples (empty by default)
 ```
 
 ## Porting notes (from qc_scores_pipeline.R to Nextflow)
