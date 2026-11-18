@@ -38,3 +38,4 @@ test_data/samplesheet_test.csv
 samplesheet_all.csv
 samplesheet_*.csv
 !test_data/samplesheet_test.example.csv
+qc-scores-nf-improvements.patch
