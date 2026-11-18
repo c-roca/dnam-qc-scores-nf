@@ -8,11 +8,15 @@ process MERGE_VERSIONS {
     path "software_versions.yml"
 
     script:
-    // The same process run once per array_type (e.g. READ_RGSET for 450K
-    // and for EPIC) emits byte-identical blocks, since it's the same
-    // container/tool versions either way -- dedupe at the line level so
-    // each unique "<process>": {...} block only appears once.
+    // Dedup by whole block (top-level "process": key + its indented child
+    // lines), not by individual line -- two different processes can share
+    // an identical child line (the same R version, say), and a per-line
+    // dedup silently drops that line from the second process's block.
     """
-    cat ${versions_yml} | awk '!seen[\$0]++' > software_versions.yml
+    awk '
+        /^"/ { if (block != "") { if (!seen[block]++) printf "%s", block }; block = \$0 "\\n"; next }
+        { block = block \$0 "\\n" }
+        END { if (block != "" && !seen[block]++) printf "%s", block }
+    ' ${versions_yml} > software_versions.yml
     """
 }
