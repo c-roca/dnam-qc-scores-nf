@@ -36,8 +36,12 @@ RUN R -e "BiocManager::install(c( \
         'IlluminaHumanMethylationEPICv2anno.20a1.hg38' \
     ), update = FALSE, ask = FALSE)"
 
-# conumee2 is not on Bioconductor -- install it from GitHub (hovestadtlab/conumee2)
-RUN R -e "remotes::install_github('hovestadtlab/conumee2/conumee2', upgrade = 'never')"
+# conumee2 is not on Bioconductor -- install it from GitHub (hovestadtlab/conumee2).
+# The token is optional: it only avoids GitHub's unauthenticated API rate limit
+# (HTTP 403) on shared CI runners. Local builds work without it.
+RUN --mount=type=secret,id=github_token \
+    GITHUB_PAT=$(cat /run/secrets/github_token 2>/dev/null || true) \
+    R -e "remotes::install_github('hovestadtlab/conumee2/conumee2', upgrade = 'never')"
 
 # Quick sanity check that everything loads at build time (fail the build now,
 # not three hours into a real run, if something isn't installed correctly)
