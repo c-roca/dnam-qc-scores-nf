@@ -40,6 +40,9 @@ jobs:
         with:
           context: docker
           push: true
+          # Passed as a build secret (not a build-arg) so it never ends up in the image.
+          secrets: |
+            github_token=${{ secrets.GITHUB_TOKEN }}
           tags: |
             ${{ env.IMAGE }}:${{ steps.version.outputs.tag }}
             ${{ env.IMAGE }}:latest
